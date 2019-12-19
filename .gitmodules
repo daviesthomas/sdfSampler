@@ -1,0 +1,6 @@
+[submodule "submodules/eigenMLP"]
+	path = submodules/eigenMLP
+	url = https://github.com/daviesthomas/EigenForward
+[submodule "submodules/HighFive"]
+	path = submodules/HighFive
+	url = https://github.com/BlueBrain/HighFive.git
