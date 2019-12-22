@@ -157,6 +157,10 @@ int main(int argc, char *argv[])
     dims[0] = V_queries.rows();
     dims[1] = V_queries.cols();
 
+    HighFive::DataSetCreateProps props;
+    props.add(HighFive::Chunking({dims[0],dims[1]}));
+    props.add(HighFive::Deflate(9));  // enable compression
+
     std::vector<std::vector<float> > pts(dims[0], std::vector<float>(dims[1]));
 
     for (int r = 0; r < dims[0]; r ++) {
@@ -164,7 +168,7 @@ int main(int argc, char *argv[])
       pts[r] = p;
     }
 
-    HighFive::DataSet Q = queryFile.createDataSet<float>("queries", HighFive::DataSpace::From(pts));
+    HighFive::DataSet Q = queryFile.createDataSet<float>("queries", HighFive::DataSpace::From(pts), props);
     Q.write(pts);
     return 1;
   }
@@ -190,13 +194,19 @@ int main(int argc, char *argv[])
     }
 
     // now load the mesh
-    triangleMeshLoader(inputFilePath, r * 0.9);
+    triangleMeshLoader(inputFilePath, r * 0.9); //normalize to be "just inside"
     // now query he SDF values for mesh, given queries
     Eigen::VectorXd S = querySDF(V_queries);
 
     // save to file
     HighFive::File sdfFile(outputFilePath, HighFive::File::ReadWrite | HighFive::File::Create | HighFive::File::Truncate);
-    HighFive::DataSet datasetS = sdfFile.createDataSet<float>("sdf", HighFive::DataSpace(S.size()));
+    HighFive::DataSpace dataspace(S.size());
+    HighFive::DataSetCreateProps props;
+
+    props.add(HighFive::Chunking(S.size()));
+    props.add(HighFive::Deflate(9));  // enable compression
+    
+    HighFive::DataSet datasetS = sdfFile.createDataSet<float>("sdf", dataspace, props);
     datasetS.write(S.data());
 
   } else {
@@ -207,7 +217,6 @@ int main(int argc, char *argv[])
     std::cout << "./sdfDataGen -s queries.h5 -r 1.0 -N 100\n";
     return 0;
   }
-  
   
   return 1;
 
